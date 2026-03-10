@@ -17,8 +17,6 @@ export default function AddNoteForm({ onNoteAdded }) {
       return;
     }
     setImages(files);
-    
-    // Create previews
     const previews = files.map(file => URL.createObjectURL(file));
     setImagePreviews(previews);
   };
@@ -32,7 +30,6 @@ export default function AddNoteForm({ onNoteAdded }) {
       const formData = new FormData();
       formData.append('note', note);
       
-      // Convert 'yyyy-MM-dd' to 'Month Day, Year'
       const formattedDate = format(new Date(date + 'T12:00:00'), 'MMMM d, yyyy');
       formData.append('date', formattedDate);
       
@@ -43,7 +40,6 @@ export default function AddNoteForm({ onNoteAdded }) {
       const newNote = await createNote(formData);
       onNoteAdded(newNote);
       
-      // Reset form
       setNote('');
       setImages([]);
       setImagePreviews([]);
@@ -57,39 +53,29 @@ export default function AddNoteForm({ onNoteAdded }) {
   };
 
   return (
-    <div className="glass-card" style={{ padding: '2rem' }}>
-      <h2 style={{ marginBottom: '1rem', color: 'var(--color-primary-dark)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        Log Gratitude
-      </h2>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div className="glass-card add-note-form">
+      <h2>✨ Log a Happy</h2>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         
-        <div style={{ position: 'relative' }}>
-          <textarea
-            className="input-field"
-            placeholder="What are you grateful for today?"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            disabled={loading}
-          />
-        </div>
+        <textarea
+          className="input-field"
+          placeholder="What made you happy today?"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          disabled={loading}
+          style={{ minHeight: '80px' }}
+        />
         
         {imagePreviews.length > 0 && (
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div className="image-previews">
             {imagePreviews.map((src, i) => (
-              <img 
-                key={i} 
-                src={src} 
-                alt="Preview" 
-                style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: 'var(--radius-sm)' }}
-              />
+              <img key={i} src={src} alt="Preview" />
             ))}
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            {/* Image Upload Button */}
+        <div className="form-row">
+          <div className="form-tools">
             <label className="btn-icon" style={{ cursor: 'pointer', position: 'relative' }}>
               <input 
                 type="file" 
@@ -99,25 +85,24 @@ export default function AddNoteForm({ onNoteAdded }) {
                 style={{ opacity: 0, position: 'absolute', width: '100%', height: '100%', cursor: 'pointer' }}
                 disabled={loading}
               />
-              <ImagePlus size={20} />
+              <ImagePlus size={18} />
             </label>
             
-            {/* Date Picker Button styling wrapper */}
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-               <Calendar size={20} style={{ position: 'absolute', left: '10px', color: 'var(--color-text-muted)' }} pointerEvents="none" />
+               <Calendar size={16} style={{ position: 'absolute', left: '10px', color: 'var(--color-text-muted)', pointerEvents: 'none' }} />
                <input 
                  type="date"
                  className="input-field"
                  value={date}
                  onChange={(e) => setDate(e.target.value)}
-                 style={{ paddingLeft: '2.5rem', cursor: 'pointer', paddingRight: '1rem', paddingTop: '0.5rem', paddingBottom: '0.5rem' }}
+                 style={{ paddingLeft: '2.2rem', cursor: 'pointer', paddingTop: '0.5rem', paddingBottom: '0.5rem', fontSize: '0.85rem' }}
                  disabled={loading}
                />
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary" disabled={loading || (!note.trim() && images.length === 0)}>
-            {loading ? 'Saving...' : 'Drop in Box'} <Send size={18} />
+          <button type="submit" className="btn btn-primary btn-sm" disabled={loading || (!note.trim() && images.length === 0)}>
+            {loading ? 'Saving...' : 'Drop in Box'} <Send size={14} />
           </button>
         </div>
       </form>

@@ -26,16 +26,15 @@ export const createNote = async (formData) => {
       
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${fileName}`;
       
       const { error: uploadError } = await supabase.storage
         .from('images')
-        .upload(filePath, file);
+        .upload(fileName, file);
         
       if (uploadError) {
         console.error('Error uploading image:', uploadError);
       } else {
-        uploadedImagePaths.push(filePath);
+        uploadedImagePaths.push(fileName);
       }
     }
   }
@@ -59,6 +58,32 @@ export const createNote = async (formData) => {
   }
   
   return data[0];
+};
+
+export const updateNote = async (id, noteText) => {
+  const { data, error } = await supabase
+    .from('notes')
+    .update({ note: noteText })
+    .eq('id', id)
+    .select();
+
+  if (error) {
+    console.error('Error updating note:', error);
+    throw error;
+  }
+  return data[0];
+};
+
+export const deleteNote = async (id) => {
+  const { error } = await supabase
+    .from('notes')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting note:', error);
+    throw error;
+  }
 };
 
 export const getImageUrl = (imagePath) => {

@@ -1,59 +1,209 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { getImageUrl } from '../api';
-import { Search } from 'lucide-react';
+import { Search, Pencil, Trash2, Check, X } from 'lucide-react';
+import DeleteConfirmModal from './DeleteConfirmModal';
 
-export default function NoteList({ notes }) {
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+export default function NoteList({ notes, onUpdateNote, onDeleteNote }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterMonth, setFilterMonth] = useState('');
+  const [filterDay, setFilterDay] = useState('');
+  const [filterYear, setFilterYear] = useState('');
+  
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState('');
+  
+  const [deletingId, setDeletingId] = useState(null);
 
-  // Filter notes by search keyword
-  const filteredNotes = notes.filter(n => 
-    n.note.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Extract unique years from notes for the year dropdown
+  const availableYears = useMemo(() => {
+    const years = new Set();
+    notes.forEach(n => {
+      try {
+        const parts = n.date.split(', ');
+        if (parts.length === 2) years.add(parts[1].trim());
+      } catch {}
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [notes]);
+
+  // Generate day options (1-31)
+  const dayOptions = Array.from({ length: 31 }, (_, i) => i + 1);
+
+  // Filter notes
+  const filteredNotes = useMemo(() => {
+    return notes.filter(n => {
+      // Keyword search
+      if (searchTerm && !n.note.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return false;
+      }
+      
+      // Parse the note date "Month Day, Year"
+      try {
+        const parts = n.date.split(', ');
+        if (parts.length !== 2) return !filterMonth && !filterDay && !filterYear;
+        
+        const monthDay = parts[0]; // "March 10"
+        const year = parts[1].trim(); // "2023"
+        const [month, day] = monthDay.split(' ');
+        
+        if (filterMonth && month !== filterMonth) return false;
+        if (filterDay && parseInt(day) !== parseInt(filterDay)) return false;
+        if (filterYear && year !== filterYear) return false;
+      } catch {
+        return false;
+      }
+      
+      return true;
+    });
+  }, [notes, searchTerm, filterMonth, filterDay, filterYear]);
+
+  const startEditing = (note) => {
+    setEditingId(note.id);
+    setEditText(note.note);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditText('');
+  };
+
+  const saveEdit = (id) => {
+    onUpdateNote(id, editText);
+    setEditingId(null);
+    setEditText('');
+  };
+
+  const handleDeleteConfirm = () => {
+    onDeleteNote(deletingId);
+    setDeletingId(null);
+  };
+
+  const clearFilters = () => {
+    setFilterMonth('');
+    setFilterDay('');
+    setFilterYear('');
+    setSearchTerm('');
+  };
+
+  const hasActiveFilters = filterMonth || filterDay || filterYear || searchTerm;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      
-      {/* Search Bar */}
-      <div className="glass-card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <Search size={20} color="var(--color-text-muted)" />
-        <input 
-          type="text"
-          className="input-field"
-          placeholder="Search memories..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ border: 'none', background: 'transparent', padding: 0, boxShadow: 'none' }}
-        />
+    <>
+      {/* Search & Filter Bar */}
+      <div className="glass-card search-filter-bar">
+        <div className="search-row">
+          <Search size={18} color="var(--color-text-muted)" />
+          <input
+            type="text"
+            placeholder="Search happies..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        
+        <div className="filter-row">
+          <select
+            className="filter-select"
+            value={filterMonth}
+            onChange={(e) => setFilterMonth(e.target.value)}
+          >
+            <option value="">Month</option>
+            {MONTHS.map(m => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+          
+          <select
+            className="filter-select"
+            value={filterDay}
+            onChange={(e) => setFilterDay(e.target.value)}
+          >
+            <option value="">Day</option>
+            {dayOptions.map(d => (
+              <option key={d} value={d}>{d}</option>
+            ))}
+          </select>
+          
+          <select
+            className="filter-select"
+            value={filterYear}
+            onChange={(e) => setFilterYear(e.target.value)}
+          >
+            <option value="">Year</option>
+            {availableYears.map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
+
+        {hasActiveFilters && (
+          <button className="btn btn-ghost btn-sm" onClick={clearFilters} style={{ alignSelf: 'flex-start' }}>
+            ✕ Clear filters
+          </button>
+        )}
       </div>
 
-      {/* Grid of Notes */}
+      {/* Results count */}
+      <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', paddingLeft: '0.25rem' }}>
+        {filteredNotes.length} {filteredNotes.length === 1 ? 'happy' : 'happies'} found
+      </p>
+
+      {/* Notes List */}
       {filteredNotes.length === 0 ? (
-        <div className="glass-card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-          {searchTerm ? 'No notes found for this search.' : 'Your box is empty. Add a note above!'}
+        <div className="glass-card empty-state">
+          <div className="empty-state-emoji">🔍</div>
+          <p>{hasActiveFilters ? 'No happies match your search.' : 'Your box is empty! Start logging happies.'}</p>
         </div>
       ) : (
-        <div className="notes-grid">
+        <div className="notes-list">
           {filteredNotes.map(note => (
-            <div key={note.id} className="glass-card animate-fade-in" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ fontSize: '0.875rem', color: 'var(--color-primary-dark)', fontWeight: 600 }}>
-                {note.date}
+            <div key={note.id} className="glass-card note-card animate-fade-in">
+              <div className="note-card-header">
+                <span className="note-date">{note.date}</span>
+                <div className="note-actions">
+                  {editingId !== note.id && (
+                    <>
+                      <button className="btn btn-ghost btn-sm" onClick={() => startEditing(note)} title="Edit">
+                        <Pencil size={14} />
+                      </button>
+                      <button className="btn btn-ghost btn-sm" onClick={() => setDeletingId(note.id)} title="Delete" style={{ color: 'var(--color-danger)' }}>
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
-              <p style={{ whiteSpace: 'pre-wrap', flex: 1 }}>{note.note}</p>
+              
+              {editingId === note.id ? (
+                <div>
+                  <textarea
+                    className="edit-textarea"
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    autoFocus
+                  />
+                  <div className="edit-actions">
+                    <button className="btn btn-ghost btn-sm" onClick={cancelEditing}>
+                      <X size={14} /> Cancel
+                    </button>
+                    <button className="btn btn-primary btn-sm" onClick={() => saveEdit(note.id)}>
+                      <Check size={14} /> Save
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="note-text">{note.note}</p>
+              )}
               
               {note.images && note.images.length > 0 && (
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                <div className="note-images">
                   {note.images.map((img, i) => (
-                    <img 
-                      key={i} 
-                      src={getImageUrl(img)} 
-                      alt="Memory" 
-                      style={{ 
-                        width: '100%', 
-                        maxHeight: '200px', 
-                        objectFit: 'cover', 
-                        borderRadius: 'var(--radius-sm)'
-                      }} 
-                    />
+                    <img key={i} src={getImageUrl(img)} alt="Memory" />
                   ))}
                 </div>
               )}
@@ -61,6 +211,14 @@ export default function NoteList({ notes }) {
           ))}
         </div>
       )}
-    </div>
+
+      {/* Delete Confirmation Modal */}
+      {deletingId && (
+        <DeleteConfirmModal
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeletingId(null)}
+        />
+      )}
+    </>
   );
 }
