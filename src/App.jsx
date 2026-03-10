@@ -5,6 +5,7 @@ import BottomTabBar from './components/BottomTabBar';
 import AddNoteForm from './components/AddNoteForm';
 import NoteList from './components/NoteList';
 import OnThisDay from './components/OnThisDay';
+import About from './components/About';
 
 function App() {
   const [notes, setNotes] = useState([]);
@@ -55,7 +56,7 @@ function App() {
       <Header />
 
       <div className="tab-content">
-        {activeTab === 'today' ? (
+        {activeTab === 'today' && (
           <>
             <AddNoteForm onNoteAdded={handleNoteAdded} />
             {loading ? (
@@ -64,7 +65,9 @@ function App() {
               <OnThisDay notes={notes} />
             )}
           </>
-        ) : (
+        )}
+
+        {activeTab === 'allHappies' && (
           <>
             {loading ? (
               <div className="loading-state">Loading memories...</div>
@@ -76,6 +79,10 @@ function App() {
               />
             )}
           </>
+        )}
+
+        {activeTab === 'about' && (
+          <About />
         )}
       </div>
 

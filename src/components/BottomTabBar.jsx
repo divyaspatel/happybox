@@ -19,6 +19,14 @@ export default function BottomTabBar({ activeTab, onTabChange }) {
         <span className="tab-icon">🌈</span>
         <span className="tab-label">All Happies</span>
       </button>
+      <button
+        className={`tab-btn ${activeTab === 'about' ? 'active' : ''}`}
+        onClick={() => onTabChange('about')}
+      >
+        {activeTab === 'about' && <div className="cloud-indicator" />}
+        <span className="tab-icon">💛</span>
+        <span className="tab-label">About</span>
+      </button>
     </nav>
   );
 }

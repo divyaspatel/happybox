@@ -21,7 +21,7 @@ export default function OnThisDay({ notes }) {
   if (onThisDayNotes.length === 0) {
     return (
       <div className="glass-card on-this-day">
-        <h3>🌟 On This Day</h3>
+        <h3>🌟 On This Day in Another Year....</h3>
         <div className="empty-state" style={{ padding: '1.5rem 1rem' }}>
           <p style={{ fontSize: '0.9rem' }}>No memories from this day in past years yet. Keep logging happies!</p>
         </div>
@@ -31,7 +31,7 @@ export default function OnThisDay({ notes }) {
 
   return (
     <div className="glass-card on-this-day">
-      <h3>🌟 On This Day</h3>
+      <h3>🌟 On This Day in Another Year....</h3>
       <div className="on-this-day-scroll">
         {onThisDayNotes.map(note => (
           <div key={note.id} className="on-this-day-card">

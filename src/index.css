@@ -139,7 +139,7 @@ h1, h2, h3, h4, h5, h6 {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem;
   position: relative;
   transition: var(--transition-fast);
   -webkit-tap-highlight-color: transparent;
@@ -148,6 +148,8 @@ h1, h2, h3, h4, h5, h6 {
 .tab-btn .tab-icon {
   font-size: 1.3rem;
   line-height: 1;
+  z-index: 2;
+  position: relative;
 }
 
 .tab-btn .tab-label {
@@ -156,6 +158,8 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 500;
   color: var(--color-text-muted);
   transition: var(--transition-fast);
+  z-index: 2;
+  position: relative;
 }
 
 .tab-btn.active .tab-label {
@@ -163,23 +167,66 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
 }
 
-/* Cloud indicator above active tab */
+/* Cloud outline indicator wrapping the active tab */
 .cloud-indicator {
   position: absolute;
-  top: -14px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 64px;
-  height: 28px;
-  background: rgba(74, 144, 217, 0.15);
-  border-radius: 50% 50% 50% 50% / 80% 80% 20% 20%;
-  filter: blur(1px);
+  inset: -6px -8px;
+  background: transparent;
+  border: 2.5px solid var(--color-accent);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  z-index: 1;
   animation: cloudFloat 2.5s ease-in-out infinite;
 }
 
 @keyframes cloudFloat {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-50%) translateY(-3px); }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+/* ========== ABOUT PAGE CLOUD ========== */
+.about-cloud {
+  background: transparent;
+  border: 2.5px solid var(--color-accent-light);
+  border-radius: 60px 60px 50px 50px;
+  padding: 2.5rem 2rem;
+  position: relative;
+  margin-top: 1.5rem;
+}
+
+.about-cloud::before {
+  content: '';
+  position: absolute;
+  top: -28px;
+  left: 30px;
+  width: 50px;
+  height: 50px;
+  background: var(--color-bg-start);
+  border: 2.5px solid var(--color-accent-light);
+  border-radius: 50%;
+  border-bottom-color: transparent;
+  z-index: 0;
+}
+
+.about-cloud::after {
+  content: '';
+  position: absolute;
+  top: -40px;
+  left: 65px;
+  width: 70px;
+  height: 70px;
+  background: var(--color-bg-start);
+  border: 2.5px solid var(--color-accent-light);
+  border-radius: 50%;
+  border-bottom-color: transparent;
+  z-index: 0;
+}
+
+.about-text {
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: var(--color-text-main);
+  position: relative;
+  z-index: 2;
 }
 
 /* ========== GLASS CONTAINERS ========== */

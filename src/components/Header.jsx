@@ -18,7 +18,7 @@ export default function Header() {
           </g>
         </svg>
       </div>
-      <h1 className="header-title">Happy Box</h1>
+      <h1 className="header-title">Divya's Happy Box</h1>
     </header>
   );
 }
