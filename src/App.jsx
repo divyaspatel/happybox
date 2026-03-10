@@ -12,20 +12,36 @@ function App() {
   const [notes, setNotes] = useState([]);
   const [pendingNotes, setPendingNotes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('today');
+  const [activeTab, setActiveTab] = useState('today'); // 'today', 'allHappies', 'about'
   const [syncing, setSyncing] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(() => {
+    return localStorage.getItem('happybox_unlocked') === 'true';
+  });
 
   useEffect(() => {
     loadAllNotes();
-    
+  }, []);
+
+  useEffect(() => {
     const handleOnline = () => {
-      console.log('App is online, triggering sync...');
+      console.log('App is online. Triggering sync...');
       syncOfflineData();
     };
-
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
-  }, []);
+  }, [pendingNotes, syncing]);
+
+  const handleUnlock = (correct) => {
+    if (correct) {
+      setIsUnlocked(true);
+      localStorage.setItem('happybox_unlocked', 'true');
+    }
+  };
+
+  const handleLock = () => {
+    setIsUnlocked(false);
+    localStorage.removeItem('happybox_unlocked');
+  };
 
   const loadAllNotes = async () => {
     setLoading(true);
@@ -121,7 +137,11 @@ function App() {
       <div className="tab-content">
         {activeTab === 'today' && (
           <>
-            <AddNoteForm onNoteAdded={handleNoteAdded} />
+            <AddNoteForm 
+              onNoteAdded={handleNoteAdded} 
+              isUnlocked={isUnlocked} 
+              onUnlock={handleUnlock}
+            />
             {loading ? (
               <div className="loading-state">Loading memories...</div>
             ) : (
@@ -140,13 +160,25 @@ function App() {
                 pendingNotes={pendingNotes}
                 onUpdateNote={handleNoteUpdated}
                 onDeleteNote={handleNoteDeleted}
+                isUnlocked={isUnlocked}
               />
             )}
           </>
         )}
 
         {activeTab === 'about' && (
-          <About />
+          <div style={{ position: 'relative' }}>
+            <About />
+            {isUnlocked && (
+              <button 
+                className="btn btn-ghost btn-sm" 
+                onClick={handleLock}
+                style={{ margin: '1rem auto', display: 'block', opacity: 0.6 }}
+              >
+                🔒 Lock App
+              </button>
+            )}
+          </div>
         )}
       </div>
 

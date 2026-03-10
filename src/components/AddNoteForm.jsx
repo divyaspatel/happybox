@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
 import { createNote } from '../api';
 import { savePendingNote } from '../offlineStore';
-import { ImagePlus, Send, Calendar } from 'lucide-react';
+import { ImagePlus, Send, Calendar, Lock, Unlock } from 'lucide-react';
 import { format } from 'date-fns';
 
-export default function AddNoteForm({ onNoteAdded }) {
+const SECRET_PASSCODE = 'Happy123';
+
+export default function AddNoteForm({ onNoteAdded, isUnlocked, onUnlock }) {
   const [note, setNote] = useState('');
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [loading, setLoading] = useState(false);
+  const [passcode, setPasscode] = useState('');
+  const [showError, setShowError] = useState(false);
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -20,6 +24,17 @@ export default function AddNoteForm({ onNoteAdded }) {
     setImages(files);
     const previews = files.map(file => URL.createObjectURL(file));
     setImagePreviews(previews);
+  };
+
+  const handlePasscodeSubmit = (e) => {
+    e.preventDefault();
+    if (passcode === SECRET_PASSCODE) {
+      onUnlock(true);
+      setShowError(false);
+    } else {
+      setShowError(true);
+      setTimeout(() => setShowError(false), 2000);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -70,8 +85,33 @@ export default function AddNoteForm({ onNoteAdded }) {
     setDate(format(new Date(), 'yyyy-MM-dd'));
   };
 
+  if (!isUnlocked) {
+    return (
+      <div className="glass-card add-note-form unlock-prompt">
+        <div className="lock-icon-container">
+          <Lock size={32} color="var(--color-primary)" />
+        </div>
+        <h2>Unlock Happy Box</h2>
+        <p>Enter passcode to log a memory</p>
+        <form onSubmit={handlePasscodeSubmit} className="passcode-form">
+          <input 
+            type="password"
+            className={`input-field ${showError ? 'shake' : ''}`}
+            placeholder="Passcode"
+            value={passcode}
+            onChange={(e) => setPasscode(e.target.value)}
+          />
+          <button type="submit" className="btn btn-primary">
+            Unlock <Unlock size={16} />
+          </button>
+        </form>
+        {showError && <p className="error-text">Incorrect passcode</p>}
+      </div>
+    );
+  }
+
   return (
-    <div className="glass-card add-note-form">
+    <div className="glass-card add-note-form animate-fade-in">
       <h2>✨ Log a Happy</h2>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         

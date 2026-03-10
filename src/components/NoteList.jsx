@@ -8,7 +8,7 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-export default function NoteList({ notes, pendingNotes = [], onUpdateNote, onDeleteNote }) {
+export default function NoteList({ notes, pendingNotes = [], onUpdateNote, onDeleteNote, isUnlocked }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMonth, setFilterMonth] = useState('');
   const [filterDay, setFilterDay] = useState('');
@@ -174,7 +174,7 @@ export default function NoteList({ notes, pendingNotes = [], onUpdateNote, onDel
                   )}
                 </div>
                 <div className="note-actions">
-                  {editingId !== note.id && note.status !== 'pending' && (
+                  {editingId !== note.id && note.status !== 'pending' && isUnlocked && (
                     <>
                       <button className="btn btn-ghost btn-sm" onClick={() => startEditing(note)} title="Edit">
                         <Pencil size={14} />
