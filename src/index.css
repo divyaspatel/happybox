@@ -167,15 +167,15 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
 }
 
-/* Cloud outline indicator wrapping the active tab */
-.cloud-indicator {
+/* Cloud SVG indicator wrapping the active tab */
+.cloud-indicator-svg {
   position: absolute;
-  inset: -6px -8px;
-  background: transparent;
-  border: 2.5px solid var(--color-accent);
-  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  inset: -12px -14px;
+  width: calc(100% + 28px);
+  height: calc(100% + 24px);
   z-index: 1;
   animation: cloudFloat 2.5s ease-in-out infinite;
+  pointer-events: none;
 }
 
 @keyframes cloudFloat {
@@ -184,49 +184,32 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ========== ABOUT PAGE CLOUD ========== */
-.about-cloud {
-  background: transparent;
-  border: 2.5px solid var(--color-accent-light);
-  border-radius: 60px 60px 50px 50px;
-  padding: 2.5rem 2rem;
+.about-wrapper {
   position: relative;
   margin-top: 1.5rem;
+  padding: 0;
 }
 
-.about-cloud::before {
-  content: '';
+.about-cloud-svg {
   position: absolute;
-  top: -28px;
-  left: 30px;
-  width: 50px;
-  height: 50px;
-  background: var(--color-bg-start);
-  border: 2.5px solid var(--color-accent-light);
-  border-radius: 50%;
-  border-bottom-color: transparent;
-  z-index: 0;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
-.about-cloud::after {
-  content: '';
-  position: absolute;
-  top: -40px;
-  left: 65px;
-  width: 70px;
-  height: 70px;
-  background: var(--color-bg-start);
-  border: 2.5px solid var(--color-accent-light);
-  border-radius: 50%;
-  border-bottom-color: transparent;
-  z-index: 0;
+.about-text-inner {
+  position: relative;
+  z-index: 2;
+  padding: 3rem 2.5rem;
 }
 
 .about-text {
   font-size: 0.95rem;
   line-height: 1.8;
   color: var(--color-text-main);
-  position: relative;
-  z-index: 2;
 }
 
 /* ========== GLASS CONTAINERS ========== */
