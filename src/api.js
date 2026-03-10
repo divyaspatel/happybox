@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = '/api';
 
 export const fetchNotes = async () => {
   const response = await axios.get(`${API_URL}/notes`);
@@ -19,5 +19,5 @@ export const createNote = async (formData) => {
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return '';
   if (imagePath.startsWith('http')) return imagePath;
-  return `http://localhost:3001${imagePath}`;
+  return imagePath;
 };

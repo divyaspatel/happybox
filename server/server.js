@@ -5,11 +5,15 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 // Paths
-const DATA_FILE = path.join(__dirname, 'data', 'notes.json');
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
+// In production on Render, we can mount a Persistent Disk. 
+// We'll read from `process.env.RENDER_DISK_PATH` if provided, otherwise default to local 'data'/'uploads'.
+const BASE_DISK_PATH = process.env.RENDER_DISK_PATH || __dirname;
+
+const DATA_FILE = path.join(BASE_DISK_PATH, 'data', 'notes.json');
+const UPLOADS_DIR = path.join(BASE_DISK_PATH, 'uploads');
 
 // Ensure uploads dir
 if (!fs.existsSync(UPLOADS_DIR)) {
@@ -87,6 +91,15 @@ app.post('/api/notes', upload.array('images', 5), (req, res) => {
     res.status(500).json({ error: 'Failed to save note' });
   }
 });
+
+// Catch-all route to serve the React app in production
+const distPath = path.join(__dirname, '..', 'dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
