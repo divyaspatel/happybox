@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { createNote } from '../api';
+import { savePendingNote } from '../offlineStore';
 import { ImagePlus, Send, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -26,30 +27,47 @@ export default function AddNoteForm({ onNoteAdded }) {
     if (!note.trim() && images.length === 0) return;
     
     setLoading(true);
+    const formattedDate = format(new Date(date + 'T12:00:00'), 'MMMM d, yyyy');
+
     try {
+      if (!navigator.onLine) {
+        throw new Error('Offline');
+      }
+
       const formData = new FormData();
       formData.append('note', note);
-      
-      const formattedDate = format(new Date(date + 'T12:00:00'), 'MMMM d, yyyy');
       formData.append('date', formattedDate);
-      
       images.forEach(img => {
         formData.append('images', img);
       });
       
       const newNote = await createNote(formData);
       onNoteAdded(newNote);
-      
-      setNote('');
-      setImages([]);
-      setImagePreviews([]);
-      setDate(format(new Date(), 'yyyy-MM-dd'));
+      resetForm();
     } catch (err) {
-      console.error(err);
-      alert('Failed to save note');
+      console.log('Online save failed or offline detected, saving to local store...', err);
+      
+      const offlineNoteInput = {
+        note,
+        date: formattedDate,
+        images, // Store the actual File/Blob objects
+        status: 'pending'
+      };
+      
+      const id = await savePendingNote(offlineNoteInput);
+      onNoteAdded({ ...offlineNoteInput, id }, true);
+      alert('Note saved locally. It will sync automatically when you are back online.');
+      resetForm();
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetForm = () => {
+    setNote('');
+    setImages([]);
+    setImagePreviews([]);
+    setDate(format(new Date(), 'yyyy-MM-dd'));
   };
 
   return (

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { fetchNotes, updateNote, deleteNote } from './api';
+import { fetchNotes, updateNote, deleteNote, syncPendingNotes } from './api';
+import { getPendingNotes, deletePendingNote } from './offlineStore';
 import Header from './components/Header';
 import BottomTabBar from './components/BottomTabBar';
 import AddNoteForm from './components/AddNoteForm';
@@ -9,17 +10,38 @@ import About from './components/About';
 
 function App() {
   const [notes, setNotes] = useState([]);
+  const [pendingNotes, setPendingNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('today');
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
-    loadNotes();
+    loadAllNotes();
+    
+    const handleOnline = () => {
+      console.log('App is online, triggering sync...');
+      syncOfflineData();
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
   }, []);
 
-  const loadNotes = async () => {
+  const loadAllNotes = async () => {
+    setLoading(true);
     try {
-      const data = await fetchNotes();
-      setNotes(data);
+      // Parallel load online and offline notes
+      const [onlineData, offlineData] = await Promise.all([
+        fetchNotes(),
+        getPendingNotes()
+      ]);
+      setNotes(onlineData);
+      setPendingNotes(offlineData);
+      
+      // If we are online, try to sync immediately
+      if (navigator.onLine && offlineData.length > 0) {
+        syncOfflineData(offlineData);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -27,8 +49,43 @@ function App() {
     }
   };
 
-  const handleNoteAdded = (newNote) => {
-    setNotes([newNote, ...notes]);
+  const syncOfflineData = async (manualPending = null) => {
+    const toSync = manualPending || await getPendingNotes();
+    if (toSync.length === 0 || syncing) return;
+
+    setSyncing(true);
+    try {
+      const { syncedNotes, errors } = await syncPendingNotes(toSync);
+      
+      // Remove successfully synced notes from IndexedDB
+      for (const item of syncedNotes) {
+        await deletePendingNote(item.originalId);
+      }
+
+      // Refresh both lists
+      const [newOnline, newOffline] = await Promise.all([
+        fetchNotes(),
+        getPendingNotes()
+      ]);
+      setNotes(newOnline);
+      setPendingNotes(newOffline);
+
+      if (errors.length > 0) {
+        console.warn(`${errors.length} notes failed to sync.`);
+      }
+    } catch (err) {
+      console.error('Sync failed:', err);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleNoteAdded = (newNote, isOffline = false) => {
+    if (isOffline) {
+      setPendingNotes([newNote, ...pendingNotes]);
+    } else {
+      setNotes([newNote, ...notes]);
+    }
   };
 
   const handleNoteUpdated = async (id, newText) => {
@@ -62,7 +119,7 @@ function App() {
             {loading ? (
               <div className="loading-state">Loading memories...</div>
             ) : (
-              <OnThisDay notes={notes} />
+              <OnThisDay notes={notes} pendingNotes={pendingNotes} />
             )}
           </>
         )}
@@ -74,6 +131,7 @@ function App() {
             ) : (
               <NoteList
                 notes={notes}
+                pendingNotes={pendingNotes}
                 onUpdateNote={handleNoteUpdated}
                 onDeleteNote={handleNoteDeleted}
               />

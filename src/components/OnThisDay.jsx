@@ -1,11 +1,13 @@
 import React from 'react';
 
-export default function OnThisDay({ notes }) {
+export default function OnThisDay({ notes, pendingNotes = [] }) {
   const today = new Date();
   const todayMonth = today.toLocaleString('default', { month: 'long' });
   const todayDay = today.getDate();
 
-  const onThisDayNotes = notes.filter(n => {
+  const allNotes = [...pendingNotes, ...notes];
+
+  const onThisDayNotes = allNotes.filter(n => {
     try {
       const parts = n.date.split(', ');
       if (parts.length !== 2) return false;

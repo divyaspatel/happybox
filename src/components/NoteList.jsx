@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { getImageUrl } from '../api';
-import { Search, Pencil, Trash2, Check, X } from 'lucide-react';
+import { Search, Pencil, Trash2, Check, X, Clock } from 'lucide-react';
 import DeleteConfirmModal from './DeleteConfirmModal';
 
 const MONTHS = [
@@ -8,7 +8,7 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-export default function NoteList({ notes, onUpdateNote, onDeleteNote }) {
+export default function NoteList({ notes, pendingNotes = [], onUpdateNote, onDeleteNote }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMonth, setFilterMonth] = useState('');
   const [filterDay, setFilterDay] = useState('');
@@ -36,7 +36,8 @@ export default function NoteList({ notes, onUpdateNote, onDeleteNote }) {
 
   // Filter notes
   const filteredNotes = useMemo(() => {
-    return notes.filter(n => {
+    const allNotes = [...pendingNotes, ...notes];
+    return allNotes.filter(n => {
       // Keyword search
       if (searchTerm && !n.note.toLowerCase().includes(searchTerm.toLowerCase())) {
         return false;
@@ -47,8 +48,8 @@ export default function NoteList({ notes, onUpdateNote, onDeleteNote }) {
         const parts = n.date.split(', ');
         if (parts.length !== 2) return !filterMonth && !filterDay && !filterYear;
         
-        const monthDay = parts[0]; // "March 10"
-        const year = parts[1].trim(); // "2023"
+        const monthDay = parts[0]; 
+        const year = parts[1].trim(); 
         const [month, day] = monthDay.split(' ');
         
         if (filterMonth && month !== filterMonth) return false;
@@ -60,7 +61,7 @@ export default function NoteList({ notes, onUpdateNote, onDeleteNote }) {
       
       return true;
     });
-  }, [notes, searchTerm, filterMonth, filterDay, filterYear]);
+  }, [notes, pendingNotes, searchTerm, filterMonth, filterDay, filterYear]);
 
   const startEditing = (note) => {
     setEditingId(note.id);
@@ -164,9 +165,16 @@ export default function NoteList({ notes, onUpdateNote, onDeleteNote }) {
           {filteredNotes.map(note => (
             <div key={note.id} className="glass-card note-card animate-fade-in">
               <div className="note-card-header">
-                <span className="note-date">{note.date}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="note-date">{note.date}</span>
+                  {note.status === 'pending' && (
+                    <span className="badge badge-pending">
+                      <Clock size={10} /> Syncing...
+                    </span>
+                  )}
+                </div>
                 <div className="note-actions">
-                  {editingId !== note.id && (
+                  {editingId !== note.id && note.status !== 'pending' && (
                     <>
                       <button className="btn btn-ghost btn-sm" onClick={() => startEditing(note)} title="Edit">
                         <Pencil size={14} />

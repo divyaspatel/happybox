@@ -86,8 +86,41 @@ export const deleteNote = async (id) => {
   }
 };
 
+
+export const syncPendingNotes = async (pendingNotes) => {
+  const syncedNotes = [];
+  const errors = [];
+
+  for (const pending of pendingNotes) {
+    try {
+      // Re-create FormData for sync
+      const formData = new FormData();
+      formData.append('note', pending.note);
+      formData.append('date', pending.date);
+      
+      // Images in IndexedDB are stored as Files/Blobs
+      if (pending.images && pending.images.length > 0) {
+        pending.images.forEach(img => {
+          formData.append('images', img);
+        });
+      }
+
+      const synced = await createNote(formData);
+      syncedNotes.push({ originalId: pending.id, synced });
+    } catch (err) {
+      console.error(`Failed to sync note ${pending.id}:`, err);
+      errors.push({ id: pending.id, error: err });
+    }
+  }
+
+  return { syncedNotes, errors };
+};
+
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return '';
+  if (imagePath instanceof Blob || imagePath instanceof File) {
+    return URL.createObjectURL(imagePath);
+  }
   if (imagePath.startsWith('http')) return imagePath;
   const { data } = supabase.storage.from('images').getPublicUrl(imagePath);
   return data.publicUrl;
