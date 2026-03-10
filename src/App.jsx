@@ -49,30 +49,28 @@ function App() {
     }
   };
 
-  const syncOfflineData = async (manualPending = null) => {
-    const toSync = manualPending || await getPendingNotes();
-    if (toSync.length === 0 || syncing) return;
-
+  const syncOfflineData = async () => {
+    if (syncing || pendingNotes.length === 0) return;
     setSyncing(true);
     try {
-      const { syncedNotes, errors } = await syncPendingNotes(toSync);
-      
+      const { syncedNotes, errors } = await syncPendingNotes(pendingNotes);
+
       // Remove successfully synced notes from IndexedDB
       for (const item of syncedNotes) {
         await deletePendingNote(item.originalId);
+        // Remove from local pending state immediately to prevent duplicates
+        setPendingNotes(prev => prev.filter(p => p.id !== item.originalId));
+        // Add to main notes list immediately
+        setNotes(prev => [item, ...prev]);
       }
-
-      // Refresh both lists
-      const [newOnline, newOffline] = await Promise.all([
-        fetchNotes(),
-        getPendingNotes()
-      ]);
-      setNotes(newOnline);
-      setPendingNotes(newOffline);
 
       if (errors.length > 0) {
         console.warn(`${errors.length} notes failed to sync.`);
       }
+      
+      // Final refresh to be absolutely sure
+      const onlineNotes = await fetchNotes();
+      setNotes(onlineNotes);
     } catch (err) {
       console.error('Sync failed:', err);
     } finally {
@@ -99,12 +97,20 @@ function App() {
   };
 
   const handleNoteDeleted = async (id) => {
+    // If it's a pending note (though we hide delete button for them, safeguard here)
+    const isPending = pendingNotes.some(n => n.id === id);
+    
     try {
-      await deleteNote(id);
-      setNotes(notes.filter(n => n.id !== id));
+      if (isPending) {
+        await deletePendingNote(id);
+        setPendingNotes(pendingNotes.filter(n => n.id !== id));
+      } else {
+        await deleteNote(id);
+        setNotes(notes.filter(n => n.id !== id));
+      }
     } catch (err) {
-      console.error(err);
-      alert('Failed to delete note');
+      console.error('Deletion error:', err);
+      alert('Failed to delete note. If this persists, please check your Supabase "Delete" policy.');
     }
   };
 

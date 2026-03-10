@@ -75,14 +75,20 @@ export const updateNote = async (id, noteText) => {
 };
 
 export const deleteNote = async (id) => {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('notes')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .select();
 
   if (error) {
     console.error('Error deleting note:', error);
     throw error;
+  }
+
+  if (!data || data.length === 0) {
+    console.warn('Delete called but no rows were affected. Checking if row exists...');
+    throw new Error('Permission denied or note not found. Please ensure you have run the "DELETE" policy in Supabase.');
   }
 };
 
