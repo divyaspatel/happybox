@@ -45,6 +45,7 @@ export default function AddNoteForm({ onNoteAdded, isUnlocked, onUnlock }) {
     const formattedDate = format(new Date(date + 'T12:00:00'), 'MMMM d, yyyy');
 
     try {
+      console.debug('[HappyBox] navigator.onLine:', navigator.onLine);
       if (!navigator.onLine) {
         throw new Error('Offline');
       }
@@ -55,12 +56,14 @@ export default function AddNoteForm({ onNoteAdded, isUnlocked, onUnlock }) {
       images.forEach(img => {
         formData.append('images', img);
       });
-      
+
+      console.debug('[HappyBox] Calling createNote...');
       const newNote = await createNote(formData);
+      console.debug('[HappyBox] createNote succeeded:', newNote);
       onNoteAdded(newNote);
       resetForm();
     } catch (err) {
-      console.log('Online save failed or offline detected, saving to local store...', err);
+      console.error('[HappyBox] Save failed, falling back to local store. Error:', err);
       
       const offlineNoteInput = {
         note,
